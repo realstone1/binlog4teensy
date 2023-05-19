@@ -41,3 +41,6 @@ Compile source code by Arduino IDE and write to Teensy 4.1 board.
 * __Read binary file__
 
 Read the generated file by "./load binary/plot_data.m"
+    
+    
+![図1](https://github.com/KRproject-tech/binlog4teensy/assets/114337358/21a76cfa-dd38-479f-8eed-3b45d9b0a3a4)
