@@ -2,7 +2,7 @@
 // * SD library does not support exFAT. *
 #include "SdFat.h"
 
-#define INT_T 2                // 割り込み時間 [ms] 
+#define INT_T 2                // Interrupt time [ms] 
 
 
 IntervalTimer intTimer;
@@ -15,7 +15,7 @@ ExFile fp;
 const int ledPin =  LED_BUILTIN;// the number of the LED pin
 
 
-int global_time_ms = 0;         // 時刻 [ms]
+int global_time_ms = 0;         // time [ms]
 
 
 
@@ -30,13 +30,13 @@ void setup() {
 
   // SD access
   sd.begin( SdioConfig( FIFO_SDIO));
-  sd.remove( "data.log"); // 削除 
+  sd.remove( "data.log"); // delete if "data.log" file is aleady exist 
   fp = sd.open( "data.log", FILE_WRITE);
 
-  // timer 割り込み
+  // timer interrupt
   //FlexiTimer2::set( INT_T, flip); 
   //FlexiTimer2::start();  
-  // Teensy 4.x では， FlexiTimer2 だと正確な割込みにならない．  
+  // for Teensy 4.x, FlexiTimer2 doesn't exactly interrupt.  
   intTimer.begin( flip, INT_T*1000); // [us]  
 }
 
@@ -44,17 +44,17 @@ void setup() {
 
 
 //--------------------------------------------------------------
-//---------------------- timer 割り込み関数 ----------------------
+//---------------------- timer interrupt function ----------------------
 //--------------------------------------------------------------
 void flip(){
 
   float out[3] = { 0 };
-  short w_data[5] = { 0 };          // ログ記録データ(2byte)
-  char w_cdata[5*2] = { 0 };        // ログ記録データ(1byte)
+  short w_data[5] = { 0 };          // logging data(2byte)
+  char w_cdata[5*2] = { 0 };        // logging data(1byte)
   int idx = 0;
   
 
-  //[*] ------------- 時刻 [ms] -------------------------
+  //[*] ------------- time [ms] -------------------------
   global_time_ms += INT_T;
   global_time_ms = (global_time_ms < 1000*1000) ? global_time_ms : 0; 
 
@@ -63,25 +63,25 @@ void flip(){
   out[1] = cos( 2*PI*(float)global_time_ms/1000.0);
   out[2] = 0.5*sin( 2*PI*2.0*(float)global_time_ms/1000.0);
   
-  //[*] -------- short int(2bytes) に変換 ---------------
+  //[*] -------- short int(2bytes) convert ---------------
   w_data[0] = 0xAAAA;
   w_data[1] = (short)( global_time_ms );
   for(idx=0;idx<3;idx++) 
     w_data[2+idx] = (short)( 100*out[idx] );
 
-  //[*] ------------- char(1bytes) に変換 --------------- 
+  //[*] ------------- char(1bytes) convert --------------- 
   // 2byte -> 1byte (Little Endian)
   for(idx=0;idx<5;idx++){
     w_cdata[2*idx+1] = (char)( (w_data[idx] >> 8) & 0x00FF );
     w_cdata[2*idx] = (char)( w_data[idx] & 0x00FF );
   }
    
-  //[*] ----------- バイナリファイルへ書き込み --------------
+  //[*] ----------- Write to binary file --------------
   if( global_time_ms <= 60*1000 ){    
     
-    // 書き込み  
+    // write  
     if( fp ) 
-      fp.write( w_cdata, 5*2); // 1bytesづつ書き込み．
+      fp.write( w_cdata, 5*2); // Write 1 bytes at a time.
     
   }else{
     if( fp )
